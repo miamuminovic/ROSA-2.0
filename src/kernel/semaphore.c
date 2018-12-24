@@ -96,9 +96,6 @@ int16_t semaphoreUnblockTask( semaphore * semaphore_handle, tcb * task_handle )
 {
 	int16_t result = 0;
 	
-	//tcb * temp = semaphore_handle->BLOCKEDLIST;
-	//(*task_handle) = semaphore_handle->BLOCKEDLIST;
-	
 	// only one blocked task
 	if( semaphore_handle->BLOCKEDLIST == semaphore_handle->BLOCKEDLIST->prevtcb )
 	{
@@ -166,17 +163,7 @@ int16_t ROSA_semaphoreLock(ROSA_semaphoreHandle_t handle)
 		taskUninstall(EXECTASK);
 		semaphoreSetCurrentTask(handle, EXECTASK);
 		taskInstall(EXECTASK);
-		
-		
-		//handle->current_task = EXECTASK;
-		//handle->task_priority = EXECTASK->effective_priority;
-		//if(EXECTASK->effective_priority > handle->ceiling)
-		//{
-			////Reinstalling task because it has higher priority, so the ready list should be rearranged
-			//taskUninstall(EXECTASK);
-			//EXECTASK->effective_priority = handle->ceiling;
-			//taskInstall(EXECTASK);
-		//}
+
 		result = 1;
 	}
 	else if( EXECTASK != handle->current_task )
@@ -185,31 +172,21 @@ int16_t ROSA_semaphoreLock(ROSA_semaphoreHandle_t handle)
 		// Task is put into the waiting queue for the specific semaphore
 		// Task is also removed from the ready list
 		
-		//enqueue(& handle->waiting_tasks, EXECTASK);
 		taskUninstall(EXECTASK);
 		semaphoreBlockTask(handle, EXECTASK);
-		//EXECTASK->blocking_semaphore = handle;
-		//if( handle->BLOCKEDLIST == NULL )
-		//{
-			//handle->BLOCKEDLIST=EXECTASK;
-			//handle->BLOCKEDLIST->nexttcb = handle->BLOCKEDLIST;
-			//handle->BLOCKEDLIST->prevtcb = handle->BLOCKEDLIST;
-		//}
-		//else
-		//{
-			//insert_after(handle->BLOCKEDLIST->prevtcb, EXECTASK);
-		//}
-		result = 1;
 		
+		result = 1;
 	}
 	else if( EXECTASK == handle->current_task)
 	{
-		result = 1;
+		result = 2;
 	}
 	
-	//ROSA_yield();
 	interruptEnable();
-	ROSA_yield();
+	if(result == 1)
+	{
+		ROSA_yield();
+	}
 	
 	return result;
 }
@@ -234,28 +211,10 @@ int16_t ROSA_semaphoreUnlock(ROSA_semaphoreHandle_t handle)
 		// If there are still some task waiting to take the semaphore, take the first one from the waiting queue
 		// Put the task back to ready list
 		
-		tcb * temp = handle->BLOCKEDLIST;// = handle->BLOCKEDLIST;
+		tcb * temp = handle->BLOCKEDLIST;
 		semaphoreUnblockTask( handle, temp );
 		semaphoreSetCurrentTask(handle, temp);
-		//dequeue(& handle->waiting_tasks, &temp);
-		//temp = handle->BLOCKEDLIST;
-		//if( handle->BLOCKEDLIST == handle->BLOCKEDLIST->prevtcb )
-		//{
-			//handle->BLOCKEDLIST=NULL;
-		//}
-		//else
-		//{
-			//handle->BLOCKEDLIST=handle->BLOCKEDLIST->nexttcb;
-		//}
-		//
-		//handle->current_task = temp;
-		//handle->task_priority = temp->effective_priority;
-		//if( temp->effective_priority > handle->ceiling )
-		//{
-			//temp->effective_priority = handle->ceiling;
-		//}
-		//
-		//temp->blocking_semaphore = NULL;
+		
 		taskInstall( temp );
 		result = 1;
 	}

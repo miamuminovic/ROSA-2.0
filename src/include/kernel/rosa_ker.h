@@ -47,9 +47,9 @@ extern uint64_t system_ticks;
 
 extern uint64_t round_robin_ticks;
 
-#define MAX_ROUND_ROBIN_TICKS 0
-
-#define ROUND_ROBIN_MODE_ENABLED (MAX_ROUND_ROBIN_TICKS > 1)
+//#define MAX_ROUND_ROBIN_TICKS 0
+//
+//#define ROUND_ROBIN_MODE_ENABLED (MAX_ROUND_ROBIN_TICKS > 1)
 /***********************************************************
  * Kernel low level context switch functions
  ***********************************************************/

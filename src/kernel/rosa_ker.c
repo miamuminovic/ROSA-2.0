@@ -50,7 +50,9 @@ tcb * SUSPENDEDLIST;
 
 tcb * ROUNDROBIN_end;
 
+#if IDLE_TASK_ENABLED
 ROSA_taskHandle_t IDLETASK;
+#endif
 
 semaphore * SEMAPHORES;
 
@@ -88,9 +90,12 @@ void ROSA_init(void)
 	EXECTASK			= NULL;
 	ROUNDROBIN_end		= NULL;
 	SEMAPHORES			= NULL;
+	
+#if IDLE_TASK_ENABLED
 	IDLETASK = NULL;
 	ROSA_taskCreate(&IDLETASK, "idle", idle, 0x40, 255);
 	taskUninstall(IDLETASK);
+#endif
 	
 	//initialize system time
 	system_ticks = 0;
@@ -108,6 +113,7 @@ uint64_t ROSA_getTickCount(void)
 	return system_ticks;
 }
 
+// Keeping this around just in case...
 //void set_round_robin_end(void)
 //{
 	//ROUNDROBIN_end = TCBLIST;
@@ -452,6 +458,7 @@ uint16_t ROSA_delayUntil( uint64_t* lastWakeTime, uint64_t ticks )
 	
 	taskUninstall(EXECTASK);
 	EXECTASK->back_online_time = (* lastWakeTime) + ticks;
+	(* lastWakeTime) = (* lastWakeTime) + ticks;
 	taskSuspend(EXECTASK);
 	
 	result = ticks - (* lastWakeTime);
@@ -473,10 +480,12 @@ uint16_t ROSA_delayAbsolute( uint64_t ticks )
 	return result;
 }
 
+#if IDLE_TASK_ENABLED
 void idle(void)
 {
 	while(1);
 }
+#endif
 
 uint16_t ROSA_taskDelete(ROSA_taskHandle_t th)
 {

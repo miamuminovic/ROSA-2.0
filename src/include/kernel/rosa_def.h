@@ -34,11 +34,19 @@
 #define NULL 0
 #endif
 
-
-
+// If SEMAPHORE_PROTECTIONS is non-zero, tasks deleted using ROSA_taskDelete will be forced to unlock any semaphore that they may hold.
+// Deleted tasks will also be safely removed from any semaphore BLOCKEDLISTs that they be in.
 #define SEMAPHORE_PROTECTIONS 1
 
+// If ROUND_ROBIN_MODE_ENABLED is non-zero, all simultaneously-ready, highest-priority tasks will be run with round robing scheduling.
+// If only one highest-priority task is ready at any point in execution, round robin will not be used.
+#define ROUND_ROBIN_MODE_ENABLED 1
 
+// MAX_ROUND_ROBIN_TICKS is the number of system ticks that each task in the round robin execution is granted.
+#define MAX_ROUND_ROBIN_TICKS 99
+
+// If IDLE_TASK_ENABLED is non-zero, an idle task will be created and executed when no other tasks are ready for execution.
+#define IDLE_TASK_ENABLED 1
 
 /***********************************************************
  * TCB block

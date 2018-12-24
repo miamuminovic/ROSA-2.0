@@ -37,12 +37,6 @@
  **********************************************************/
 void scheduler(void)
 {
-
-	if(system_ticks == 2407)
-	{
- 		int i = 0;
-	}
-
 // for handling possible round robin configuration
 /*******************************************************************/
 #if ROUND_ROBIN_MODE_ENABLED
@@ -76,6 +70,7 @@ void scheduler(void)
 		iterator = SUSPENDEDLIST;
 	}
 	
+#if IDLE_TASK_ENABLED
 	// if no tasks are ready, run the idle task
 	if( TCBLIST == NULL )
 	{
@@ -86,4 +81,13 @@ void scheduler(void)
 	{
 		EXECTASK = TCBLIST;
 	}
+#else
+	EXECTASK = TCBLIST;
+#endif
+
+	if( EXECTASK == NULL )
+	{
+		int i = 0;
+	}
+
 }

@@ -15,97 +15,151 @@
 //Include configuration
 #include "rosa_config.h"
 
- void taskLo(void);
- void taskMi(void);
- void taskHi(void);
+#define STACK_SIZE 0x40
 
- void ROSA_test_delete_task_semaphore(void);
+ROSA_taskHandle_t hog_semaphores_task_handle;
+ROSA_taskHandle_t task1_handle;
+ROSA_taskHandle_t task2_handle;
+ROSA_taskHandle_t task3_handle;
+ROSA_taskHandle_t arbiter_task_handle;
 
-#define TASK_MAX_STACK 0x40
+ROSA_taskHandle_t light1_handle = NULL;
+ROSA_taskHandle_t light2_handle = NULL;
 
-// Task handle declarations
-ROSA_taskHandle_t t_taskLo = NULL; 		// Low priority task
-ROSA_taskHandle_t t_taskMi = NULL;		// Medium priority task
-ROSA_taskHandle_t t_taskHi = NULL;		// High priority task
+ROSA_semaphoreHandle_t S1 = NULL;
+ROSA_semaphoreHandle_t S2 = NULL;
+ROSA_semaphoreHandle_t S3 = NULL;
+ROSA_semaphoreHandle_t S4 = NULL;
 
-// Semaphore handle declarations
-ROSA_semaphoreHandle_t s_sem;			// A semaphore to be used by tasks L and H
-
-// This task locks a semaphore and goes to sleep
-void taskLo(void)
+void hog_semaphores_task(void)
 {
-	while(1) {
-		ROSA_semaphoreLock(s_sem);
-		ledOn(LED1_GPIO);
-		ROSA_delay(50);
-		ROSA_semaphoreUnlock(s_sem);
-
-		// Task was not deleted, so turn LED1 off
-		ledOff(LED1_GPIO);
+	while(1)
+	{
+		ROSA_semaphoreLock(S4);
+		ROSA_delay(300);
+		ROSA_semaphoreLock(S1);
+		ROSA_delay(300);
+		ROSA_semaphoreLock(S2);
+		ROSA_delay(300);
+		ROSA_semaphoreLock(S3);
+		ROSA_delay(300);
+		ROSA_semaphoreUnlock(S4);
 		ROSA_delay(1000);
+		ROSA_semaphoreUnlock(S3);
+		ROSA_semaphoreUnlock(S2);
+		ROSA_semaphoreUnlock(S1);
+		ROSA_semaphoreUnlock(S4);
 	}
-
 }
 
-// This task will try to delete taskLo who is currently holding the semaphore
-void taskMi(void)
+void task1(void)
 {
-	while(1) {
-		ROSA_delay(20);
+	uint64_t time = ROSA_getTickCount();
+	while(1)
+	{
+		ROSA_semaphoreLock(S1);
 		
-		// Try to delete task
-		if(ROSA_taskDelete(t_taskLo) < 0) {
-			// Task delete failed, could not delete a task holding a semaphore
-			ledOn(LED2_GPIO);
-			
-			// Try to delete the semaphore instead
-			if (ROSA_semaphoreDelete(s_sem) >= 0) {
-				ledOn(LED4_GPIO);
-			}
+		if( ROSA_getTickCount() - time < 1000 )
+		{
+			ledToggle(LED0_GPIO);
+		}
+		else
+		{
+			ledOff(LED0_GPIO);
+			time = ROSA_getTickCount();
+			ROSA_semaphoreUnlock(S1);
+		}
+		ROSA_delay(100);
+	}
+}
 
-			} else {
-			// Task delete successfull, can delete tasks holding semaphores
-			ledOn(LED3_GPIO);
-			t_taskLo = NULL;
+void task2(void)
+{
+	uint64_t time = ROSA_getTickCount();
+	while(1)
+	{
+		ROSA_semaphoreLock(S2);
+		
+		if( ROSA_getTickCount() - time < 1000 )
+		{
+			ledToggle(LED1_GPIO);
+		}
+		else
+		{
+			ledOff(LED1_GPIO);
+			time = ROSA_getTickCount();
+			ROSA_semaphoreUnlock(S2);
+		}
+		ROSA_delay(100);
+	}
+}
+
+void task3(void)
+{
+	uint64_t time = ROSA_getTickCount();
+	while(1)
+	{
+		ROSA_semaphoreLock(S3);
+		
+		if( ROSA_getTickCount() - time < 1000 )
+		{
+			ledToggle(LED2_GPIO);
+		}
+		else
+		{
+			ledOff(LED2_GPIO);
+			time = ROSA_getTickCount();
+			ROSA_semaphoreUnlock(S3);
+		}
+		ROSA_delay(100);
+	}
+}
+
+void arbiter_task(void)
+{
+	while(1)
+	{
+		//ROSA_delay(10);
+		//ROSA_semaphoreLock(S4);
+		ROSA_delay(5000);
+		if( hog_semaphores_task_handle != NULL)
+		{
+			ROSA_taskDelete(hog_semaphores_task_handle);
+			hog_semaphores_task_handle = NULL;
+		}
+		else
+		{
+			ROSA_taskCreate(& hog_semaphores_task_handle, "hogS", hog_semaphores_task, STACK_SIZE, 1);
 		}
 		
-		ROSA_delay(10000);
+		//ROSA_delay(5000);
+		//ROSA_semaphoreUnlock(S4);
+		//ROSA_delay(10);
 	}
-
 }
 
-// This task will try to lock the same semaphore as Lo, if it succeeds it will turn on LED7
-void taskHi(void)
+void light1(void)
 {
-	while(1) {
-		ROSA_delay(10);
-
-		// Try to lock the semaphore, but get blocked
-		ROSA_semaphoreLock(s_sem);
-
-		// Succeeded to get the semaphore, it did not get indefinitely blocked.
-		ledOn(LED7_GPIO);
-		ROSA_semaphoreUnlock(s_sem);
-
-		// Delete the tasks, test's done
-		//ROSA_taskDelete(t_taskMi);
+	uint64_t time = ROSA_getTickCount();
+	while(1)
+	{
+		ledOn(LED0_GPIO);
+		ledOff(LED1_GPIO);
 		
-		ROSA_taskDelete(NULL);	// Since this is NULL, it should delete the running task (taskHi)
-
-		ledOn(LED6_GPIO); // Did not delete this task
+		ROSA_delayUntil(& time, 500);
 	}
-
 }
 
-void ROSA_test_delete_task_semaphore(void)
+void light2(void)
 {
-	// Create the tasks
-	ROSA_taskCreate(&t_taskLo, "tskL", taskLo, TASK_MAX_STACK, 3);
-	ROSA_taskCreate(&t_taskMi, "tskM", taskMi, TASK_MAX_STACK, 2);
-	ROSA_taskCreate(&t_taskHi, "tskH", taskHi, TASK_MAX_STACK, 1);
-
-	// Create the semaphore
-	ROSA_semaphoreCreate(&s_sem, 1);
+	uint64_t time = ROSA_getTickCount() + 250;
+	while(1)
+	{
+		ledOn(LED1_GPIO);
+		ledOff(LED0_GPIO);
+		
+		ROSA_delayUntil(& time, 500);
+	}
 }
 
 /*************************************************************
@@ -116,7 +170,19 @@ int main(void)
 	//Initialize the ROSA kernel
 	ROSA_init();
 	
-	ROSA_test_delete_task_semaphore();
+	ROSA_taskCreate(& hog_semaphores_task_handle, "hogS", hog_semaphores_task, STACK_SIZE, 2);
+	ROSA_taskCreate(& task1_handle,					"tsk1", task1, STACK_SIZE, 3);
+	ROSA_taskCreate(& task2_handle,					"tsk2", task2, STACK_SIZE, 3);
+	ROSA_taskCreate(& task3_handle,					"tsk3", task3, STACK_SIZE, 3);
+	//ROSA_taskCreate(& arbiter_task_handle,			"arbt", arbiter_task, STACK_SIZE, 1);
+	
+	//ROSA_taskCreate(& light1_handle, "lgt1", light1, STACK_SIZE, 1);
+	//ROSA_taskCreate(& light2_handle, "lgt2", light2, STACK_SIZE, 1);
+	
+	ROSA_semaphoreCreate(& S1, 2);
+	ROSA_semaphoreCreate(& S2, 2);
+	ROSA_semaphoreCreate(& S3, 2);
+	ROSA_semaphoreCreate(& S4, 1);
 	
 	timerStart();
 	ROSA_start();
