@@ -37,6 +37,12 @@
  **********************************************************/
 void scheduler(void)
 {
+	
+	if( system_ticks >= 12444 )
+	{
+		int i = 0;
+	}
+	
 // for handling possible round robin configuration
 /*******************************************************************/
 #if ROUND_ROBIN_MODE_ENABLED
@@ -84,10 +90,5 @@ void scheduler(void)
 #else
 	EXECTASK = TCBLIST;
 #endif
-
-	if( EXECTASK == NULL )
-	{
-		int i = 0;
-	}
 
 }

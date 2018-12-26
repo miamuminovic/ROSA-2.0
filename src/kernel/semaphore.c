@@ -33,13 +33,13 @@ int16_t semaphoreAdd(semaphore * handle)
 
 int16_t ROSA_semaphoreCreate(ROSA_semaphoreHandle_t * handle, uint8_t ceiling)
 {
-	interruptDisable();
+	//interruptDisable();
 	int16_t result = -1;
 	(*handle) = calloc(1, sizeof(semaphore));
 	(*handle)->ceiling = ceiling;
 	result = abs(*handle);
 	semaphoreAdd(*handle);
-	interruptEnable();
+	//interruptEnable();
 	
 	return result;
 }
@@ -97,7 +97,7 @@ int16_t semaphoreUnblockTask( semaphore * semaphore_handle, tcb * task_handle )
 	int16_t result = 0;
 	
 	// only one blocked task
-	if( semaphore_handle->BLOCKEDLIST == semaphore_handle->BLOCKEDLIST->prevtcb )
+	if( semaphore_handle->BLOCKEDLIST == semaphore_handle->BLOCKEDLIST->nexttcb )
 	{
 		semaphore_handle->BLOCKEDLIST = NULL;
 	}
@@ -183,10 +183,7 @@ int16_t ROSA_semaphoreLock(ROSA_semaphoreHandle_t handle)
 	}
 	
 	interruptEnable();
-	if(result == 1)
-	{
-		ROSA_yield();
-	}
+	ROSA_yield();
 	
 	return result;
 }
@@ -199,27 +196,26 @@ int16_t ROSA_semaphoreUnlock(ROSA_semaphoreHandle_t handle)
 	{
 		// If the semaphore is locked, unlock it, change the priority of the task to the last effective priority
 		// Set the pointer to the current task to NULL
-		taskUninstall(EXECTASK);
-		semaphoreUnsetCurrentTask(handle);
-		taskInstall(EXECTASK);
 		
+		taskUninstall(EXECTASK);			// take EXECTASK out of TCBLIST
+		semaphoreUnsetCurrentTask(handle);	// update effective priority and current_task metadata
+		taskInstall(EXECTASK);				// put EXECTASK back in TCBLIST
+		
+		if(handle->BLOCKEDLIST != NULL)
+		{
+			// If there are still some task waiting to take the semaphore, take the first one from the waiting queue
+			// Put the task back to ready list
+		
+			tcb * temp = handle->BLOCKEDLIST;
+			semaphoreUnblockTask( handle, temp );
+			semaphoreSetCurrentTask( handle, temp );
+		
+			taskInstall( temp );
+		}
+
 		result = 1;
 	}
-	
-	if(handle->BLOCKEDLIST != NULL)
-	{
-		// If there are still some task waiting to take the semaphore, take the first one from the waiting queue
-		// Put the task back to ready list
-		
-		tcb * temp = handle->BLOCKEDLIST;
-		semaphoreUnblockTask( handle, temp );
-		semaphoreSetCurrentTask(handle, temp);
-		
-		taskInstall( temp );
-		result = 1;
-	}
-	
-	//ROSA_yield();
+
 	interruptEnable();
 	ROSA_yield();
 	
@@ -242,7 +238,7 @@ int16_t semaphoreEvictCurrentTask(ROSA_semaphoreHandle_t handle)
 			temp = handle->BLOCKEDLIST;
 			semaphoreUnblockTask(handle, temp);
 			semaphoreSetCurrentTask(handle, temp);
-			taskInstall(handle->current_task);
+			taskInstall(temp);
 		}
 		
 		result = 1;

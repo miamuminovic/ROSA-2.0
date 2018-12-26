@@ -517,28 +517,28 @@ uint16_t ROSA_taskDelete_noncritical(ROSA_taskHandle_t th)
 // semaphore protections
 /**********************************************************************/
 #if SEMAPHORE_PROTECTIONS
-semaphore * iterator = SEMAPHORES;
-while( iterator != NULL )
-{
-	if( iterator->current_task == th )
+	semaphore * iterator = SEMAPHORES;
+	while( iterator != NULL )
 	{
-		semaphoreEvictCurrentTask( iterator );
-	}
+		if( iterator->current_task == th )
+		{
+			semaphoreEvictCurrentTask( iterator );
+		}
 	
-	if( iterator->nextsemaphore == SEMAPHORES )
-	{
-		iterator = NULL;
+		if( iterator->nextsemaphore == SEMAPHORES )
+		{
+			iterator = NULL;
+		}
+		else
+		{
+			iterator = iterator->nextsemaphore;
+		}
 	}
-	else
-	{
-		iterator = iterator->nextsemaphore;
-	}
-}
 
-if( th->blocking_semaphore != NULL )
-{
-	semaphoreUnblockTask(th->blocking_semaphore, th);
-}
+	if( th->blocking_semaphore != NULL )
+	{
+		semaphoreUnblockTask(th->blocking_semaphore, th);
+	}
 #endif
 /**********************************************************************/
 	
