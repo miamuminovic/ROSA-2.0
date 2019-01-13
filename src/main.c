@@ -118,14 +118,14 @@ void hog_semaphores_task(void)
 		ROSA_delay(300);
 		ROSA_semaphoreLock(S3);
 		ROSA_delay(300);
-		
+		ledOff(LED6_GPIO);
 		ROSA_delay(800);
 		
 		ROSA_semaphoreUnlock(S3);
 		ROSA_semaphoreUnlock(S2);
 		ROSA_semaphoreUnlock(S1);
 		ROSA_semaphoreUnlock(S4);
-		ledOff(LED6_GPIO);
+		//ledOff(LED6_GPIO);
 		
 		ROSA_delay(800);
 		
@@ -225,6 +225,68 @@ void light2(void)
 	}
 }
 
+ROSA_taskHandle_t semaphores_task_handle     = NULL;
+ROSA_taskHandle_t led3_task_handle = NULL;
+ROSA_taskHandle_t led5_task_handle = NULL;
+ROSA_taskHandle_t led7_task_handle = NULL;
+
+void semaphores_task(void)
+{
+	while(1)
+	{
+		ROSA_semaphoreLock(S3);
+		ledOn(LED0_GPIO);
+		delay_ms(1000);
+		
+		ROSA_semaphoreLock(S2);
+		ledOn(LED1_GPIO);
+		delay_ms(1000);
+
+		ROSA_semaphoreLock(S1);
+		ledOn(LED2_GPIO);
+		delay_ms(1000);
+		
+		ledOff(LED2_GPIO);
+		ROSA_semaphoreUnlock(S1);
+		delay_ms(1000);
+
+		ledOff(LED1_GPIO);
+		ROSA_semaphoreUnlock(S2);
+		delay_ms(1000);
+		
+		ledOff(LED0_GPIO);
+		ROSA_semaphoreUnlock(S3);
+		delay_ms(1000);
+	}
+}
+
+void led3_task(void)
+{
+	while(1)
+	{
+		ledToggle(LED3_GPIO);
+		ROSA_delay(100);
+	}
+}
+
+void led5_task(void)
+{
+	while(1)
+	{
+		ledToggle(LED5_GPIO);
+		ROSA_delay(100);
+	}
+}
+
+void led7_task(void)
+{
+	while(1)
+	{
+		ledToggle(LED7_GPIO);
+		ROSA_delay(100);
+	}
+}
+
 /*************************************************************
  * Main function
  ************************************************************/
@@ -233,50 +295,57 @@ int main(void)
 	//Initialize the ROSA kernel
 	ROSA_init();
 	
+	//ROSA_taskCreate(& semaphores_task_handle, "tsk1", semaphores_task, 0x40, 7);
+	//ROSA_taskCreate(& led3_task_handle, "led3", led3_task, 0x40, 2);
+	//ROSA_taskCreate(& led5_task_handle, "led5", led5_task, 0x40, 4);
+	//ROSA_taskCreate(& led7_task_handle, "led7", led7_task, 0x40, 6);
+	//ROSA_semaphoreCreate(&S1,1);
+	//ROSA_semaphoreCreate(&S2,3);
+	//ROSA_semaphoreCreate(&S3,5);
+	
 	//ROSA_taskCreate(& hog_semaphores_task_handle, "hogS", hog_semaphores_task, STACK_SIZE, 2);
-	//ROSA_taskCreate(& task1_handle,					"tsk1", task1, STACK_SIZE, 3);
-	//ROSA_taskCreate(& task2_handle,					"tsk2", task2, STACK_SIZE, 3);
-	//ROSA_taskCreate(& task3_handle,					"tsk3", task3, STACK_SIZE, 3);
-	//ROSA_taskCreate(& task4_handle,					"tsk4", task4, STACK_SIZE, 3);
-	//ROSA_taskCreate(& arbiter_task_handle,			"arbt", arbiter_task, STACK_SIZE, 1);
+	ROSA_taskCreate(& task1_handle,					"tsk1", task1, STACK_SIZE, 3);
+	ROSA_taskCreate(& task2_handle,					"tsk2", task2, STACK_SIZE, 3);
+	ROSA_taskCreate(& task3_handle,					"tsk3", task3, STACK_SIZE, 3);
+	ROSA_taskCreate(& task4_handle,					"tsk4", task4, STACK_SIZE, 3);
+	ROSA_taskCreate(& arbiter_task_handle,			"arbt", arbiter_task, STACK_SIZE, 1);
+	ROSA_semaphoreCreate(& S1, 3);
+	ROSA_semaphoreCreate(& S2, 3);
+	ROSA_semaphoreCreate(& S3, 3);
+	ROSA_semaphoreCreate(& S4, 3);
 	
-	ROSA_taskCreate(& task_handle_1, "fsdj", toggle_1, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_2, "test", toggle_2, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_3, "test", toggle_3, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_4, "test", toggle_4, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_5, "test", toggle_5, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_6, "test", toggle_6, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_7, "test", toggle_7, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_8, "test", toggle_8, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_9, "test", toggle_9, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_10, "test", toggle_10, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_11, "test", toggle_11, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_12, "test", toggle_12, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_13, "test", toggle_13, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_14, "test", toggle_14, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_15, "test", toggle_15, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_16, "test", toggle_16, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_17, "test", toggle_17, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_18, "test", toggle_18, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_19, "test", toggle_19, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_20, "test", toggle_20, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_21, "test", toggle_21, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_22, "test", toggle_22, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_23, "test", toggle_23, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_24, "test", toggle_24, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_25, "test", toggle_25, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_26, "test", toggle_26, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_27, "test", toggle_27, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_28, "test", toggle_28, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_29, "test", toggle_29, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_30, "test", toggle_30, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_31, "test", toggle_31, STACK_SIZE, 3);
-	ROSA_taskCreate(& task_handle_32, "test", toggle_32, STACK_SIZE, 3);
-	
-	ROSA_semaphoreCreate(& S1, 2);
-	ROSA_semaphoreCreate(& S2, 2);
-	ROSA_semaphoreCreate(& S3, 2);
-	ROSA_semaphoreCreate(& S4, 1);
+	//ROSA_taskCreate(& task_handle_1, "fsdj", toggle_1, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_2, "test", toggle_2, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_3, "test", toggle_3, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_4, "test", toggle_4, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_5, "test", toggle_5, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_6, "test", toggle_6, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_7, "test", toggle_7, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_8, "test", toggle_8, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_9, "test", toggle_9, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_10, "test", toggle_10, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_11, "test", toggle_11, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_12, "test", toggle_12, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_13, "test", toggle_13, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_14, "test", toggle_14, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_15, "test", toggle_15, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_16, "test", toggle_16, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_17, "test", toggle_17, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_18, "test", toggle_18, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_19, "test", toggle_19, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_20, "test", toggle_20, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_21, "test", toggle_21, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_22, "test", toggle_22, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_23, "test", toggle_23, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_24, "test", toggle_24, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_25, "test", toggle_25, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_26, "test", toggle_26, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_27, "test", toggle_27, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_28, "test", toggle_28, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_29, "test", toggle_29, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_30, "test", toggle_30, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_31, "test", toggle_31, STACK_SIZE, 3);
+	//ROSA_taskCreate(& task_handle_32, "test", toggle_32, STACK_SIZE, 3);
 	
 	init_tc();
 	

@@ -78,6 +78,7 @@ typedef struct tcb_record_t
 	uint8_t effective_priority;					// the priority of a task that is used by the scheduler (affected by the semaphores that the task holds)
 	uint64_t back_online_time;					// the time at which a suspended task is set to resume execution
 	struct semaphore_t * blocking_semaphore;	// a task can only be blocked by a single semaphore at any given time
+	int suspended;
 } tcb;
 
 #define ROSA_taskHandle_t tcb*

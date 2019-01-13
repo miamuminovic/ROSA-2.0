@@ -88,7 +88,6 @@ void ROSA_init(void)
 	TCBLIST				= NULL;
 	SUSPENDEDLIST		= NULL;
 	EXECTASK			= NULL;
-	//ROUNDROBIN_end		= NULL;
 	SEMAPHORES			= NULL;
 	
 #if IDLE_TASK_ENABLED
@@ -112,21 +111,6 @@ uint64_t ROSA_getTickCount(void)
 {
 	return system_ticks;
 }
-
-// Keeping this around just in case...
-//void set_round_robin_end(void)
-//{
-	//ROUNDROBIN_end = TCBLIST;
-	//while( ROUNDROBIN_end && ROUNDROBIN_end->effective_priority == TCBLIST->effective_priority && ROUNDROBIN_end->nexttcb != TCBLIST)
-	//{
-		//ROUNDROBIN_end = ROUNDROBIN_end->nexttcb;
-	//}
-	//
-	//if( ROUNDROBIN_end == TCBLIST )
-	//{
-		//ROUNDROBIN_end = NULL;
-	//}
-//}
 
 uint16_t insert_after( tcb * position, tcb * new_task )
 {
@@ -223,10 +207,6 @@ uint16_t taskInstall(tcb * task)
 		task->nexttcb = task;
 		task->prevtcb = task;
 
-//#if ROUND_ROBIN_MODE_ENABLED
-		//ROUNDROBIN_end = NULL; // shouldn't be necessary, but is safer
-//#endif
-
 		result = 1;
 	}
 	//if this task should be inserted before the first task in the list
@@ -252,13 +232,6 @@ uint16_t taskInstall(tcb * task)
 		
 		result = 1;
 	}
-
-//#if ROUND_ROBIN_MODE_ENABLED
-	//if( TCBLIST->effective_priority == task->effective_priority )
-	//{
-		//ROUNDROBIN_end = task;
-	//}
-//#endif
 
 	return result;
 }
@@ -298,6 +271,8 @@ uint16_t ROSA_taskCreate(ROSA_taskHandle_t* th, char* id, void* taskFunction, ui
 		
 		temp->priority = priority;
 		temp->effective_priority = priority;
+		
+		temp->suspended = 0;
 		
 		contextInit(temp);
 		
@@ -349,28 +324,14 @@ uint16_t taskSuspend(tcb * task)
 		result = 1;
 	}
 	
+	task->suspended = 1;
+	
 	return result;
 }
 
 uint16_t taskUninstall( tcb * task )
 {
 	uint16_t result = -1;
-
-//#if ROUND_ROBIN_MODE_ENABLED
-	//// if the uninstalled task has the same priority as the first task and we are in round robin mode
-	//if( task->effective_priority == TCBLIST->effective_priority && ROUNDROBIN_end != NULL ) // ROUNDROBIN_end is potentially affected
-	//{
-		//// if there are only two tasks in the round robin
-		//if( TCBLIST->nexttcb == ROUNDROBIN_end )
-		//{
-			//ROUNDROBIN_end = NULL;
-		//}
-		//else if( task == ROUNDROBIN_end )
-		//{
-			//ROUNDROBIN_end = ROUNDROBIN_end->prevtcb;
-		//}
-	//}
-//#endif
 	
 	// change head and tail of TCBLIST if necessary
 	if( TCBLIST == task && (TCBLIST->prevtcb) == task )
@@ -408,6 +369,7 @@ uint16_t taskUnsuspend( tcb * task )
 	}
 	
 	result = remove(task);
+	task->suspended = 0;
 	
 	return result;
 }
@@ -446,8 +408,8 @@ uint16_t ROSA_delay( uint64_t ticks )
 	
 	result = ticks;
 	
-	//interruptEnable();
 	ROSA_yield();
+	interruptEnable();
 	return result;
 }
 
@@ -463,8 +425,8 @@ uint16_t ROSA_delayUntil( uint64_t* lastWakeTime, uint64_t ticks )
 	
 	result = ticks - (* lastWakeTime);
 	
-	//interruptEnable();
 	ROSA_yield();
+	interruptEnable();
 	return result;
 }
 
@@ -475,8 +437,8 @@ uint16_t ROSA_delayAbsolute( uint64_t ticks )
 	taskUninstall(EXECTASK);
 	EXECTASK->back_online_time = ticks;
 	taskSuspend(EXECTASK);
-	//interruptEnable();
 	ROSA_yield();
+	interruptEnable();
 	return result;
 }
 
@@ -492,13 +454,13 @@ uint16_t ROSA_taskDelete(ROSA_taskHandle_t th)
 	interruptDisable();
 	
 	uint16_t result = ROSA_taskDelete_noncritical(th);
-	interruptEnable();
 	
 	// if we have just deleted EXECTASK
 	if( result == 10 )
 	{
 		ROSA_yield();
 	}
+	interruptEnable();
 	
 	return result;
 }
@@ -564,22 +526,6 @@ uint16_t ROSA_taskDelete_noncritical(ROSA_taskHandle_t th)
 uint16_t remove_from_all( tcb * removed_task )
 {
 	uint16_t result = -1;
-
-#if ROUND_ROBIN_MODE_ENABLED
-	// if the uninstalled task has the same priority as the first task and we are in round robin mode
-	if( removed_task->effective_priority == TCBLIST->effective_priority && ROUNDROBIN_end != NULL ) // ROUNDROBIN_end is potentially affected
-	{
-		// if there are only two tasks in the round robin
-		if( TCBLIST->nexttcb == ROUNDROBIN_end )
-		{
-			ROUNDROBIN_end = NULL;
-		}
-		else if( removed_task == ROUNDROBIN_end )
-		{
-			ROUNDROBIN_end = ROUNDROBIN_end->prevtcb;
-		}
-	}
-#endif
 	
 	// change head and tail of TCBLIST if necessary
 	if( TCBLIST == removed_task && (TCBLIST->prevtcb) == removed_task )

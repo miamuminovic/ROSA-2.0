@@ -176,6 +176,7 @@ int16_t ROSA_semaphoreLock(ROSA_semaphoreHandle_t handle)
 		semaphoreBlockTask(handle, EXECTASK);
 		
 		result = 1;
+		ROSA_yield();
 	}
 	else if( EXECTASK == handle->current_task)
 	{
@@ -183,7 +184,6 @@ int16_t ROSA_semaphoreLock(ROSA_semaphoreHandle_t handle)
 	}
 	
 	interruptEnable();
-	ROSA_yield();
 	
 	return result;
 }
@@ -216,8 +216,8 @@ int16_t ROSA_semaphoreUnlock(ROSA_semaphoreHandle_t handle)
 		result = 1;
 	}
 
-	interruptEnable();
 	ROSA_yield();
+	interruptEnable();
 	
 	return result;
 }

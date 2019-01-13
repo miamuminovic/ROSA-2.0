@@ -50,15 +50,11 @@ void scheduler(void)
 		if( round_robin_ticks >= MAX_ROUND_ROBIN_TICKS )
 		{
 			// this really should be possible to optimize
-			taskUninstall(EXECTASK);
-			taskInstall(EXECTASK);
-			
-			// this code is almost functional, but not quite. low priority tasks run even in the presence of non-delayed, high priority tasks
-			//TCBLIST = TCBLIST->nexttcb;
-			//remove(EXECTASK);
-			//insert_after(ROUNDROBIN_end, EXECTASK);
-			//ROUNDROBIN_end = EXECTASK;
-			
+			if( EXECTASK->blocking_semaphore == NULL && EXECTASK->suspended == 0 )
+			{
+				taskUninstall(EXECTASK);
+				taskInstall(EXECTASK);
+			}
 			round_robin_ticks = 0;
 		}
 	//}
@@ -72,14 +68,6 @@ void scheduler(void)
 		taskInstall(iterator);
 	}
 	
-	context_switch_time = *(uint32_t*)(0xFFFF3850);
-	
 	EXECTASK = TCBLIST;
-
-	context_switch_time = *(uint32_t*)(0xFFFF3850) - context_switch_time;
-	if(context_switch_time < 10000)
-	{
-		total_context_switch_time += context_switch_time;
-	}
 
 }
