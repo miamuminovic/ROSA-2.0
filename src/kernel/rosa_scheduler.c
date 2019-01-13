@@ -27,6 +27,8 @@
 #include "include/kernel/rosa_tim.h"
 #include "kernel/rosa_scheduler.h"
 
+tcb * iterator;
+
 /***********************************************************
  * scheduler
  *
@@ -38,16 +40,11 @@
 void scheduler(void)
 {
 	
-	if( system_ticks >= 12444 )
-	{
-		int i = 0;
-	}
-	
 // for handling possible round robin configuration
 /*******************************************************************/
 #if ROUND_ROBIN_MODE_ENABLED
-	if( ROUNDROBIN_end )
-	{
+	//if( ROUNDROBIN_end )
+	//{
 		round_robin_ticks ++;
 		
 		if( round_robin_ticks >= MAX_ROUND_ROBIN_TICKS )
@@ -64,31 +61,25 @@ void scheduler(void)
 			
 			round_robin_ticks = 0;
 		}
-	}
+	//}
 #endif
 /*******************************************************************/
-
-	tcb * iterator = SUSPENDEDLIST;
-	while( iterator && iterator->back_online_time <= system_ticks )
+	
+	while( SUSPENDEDLIST && SUSPENDEDLIST->back_online_time <= system_ticks )
 	{
+		iterator = SUSPENDEDLIST;
 		taskUnsuspend(iterator);
 		taskInstall(iterator);
-		iterator = SUSPENDEDLIST;
 	}
 	
-#if IDLE_TASK_ENABLED
-	// if no tasks are ready, run the idle task
-	if( TCBLIST == NULL )
-	{
-		EXECTASK = IDLETASK;
-	}
-	// if at least one task is ready, run the highest priority task
-	else
-	{
-		EXECTASK = TCBLIST;
-	}
-#else
+	context_switch_time = *(uint32_t*)(0xFFFF3850);
+	
 	EXECTASK = TCBLIST;
-#endif
+
+	context_switch_time = *(uint32_t*)(0xFFFF3850) - context_switch_time;
+	if(context_switch_time < 10000)
+	{
+		total_context_switch_time += context_switch_time;
+	}
 
 }

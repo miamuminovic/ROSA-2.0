@@ -37,7 +37,7 @@ extern tcb * TCBLIST;
 
 extern tcb * SUSPENDEDLIST;
 
-extern tcb * ROUNDROBIN_end;
+//extern tcb * ROUNDROBIN_end;
 
 extern ROSA_taskHandle_t IDLETASK;
 
@@ -47,9 +47,8 @@ extern uint64_t system_ticks;
 
 extern uint64_t round_robin_ticks;
 
-//#define MAX_ROUND_ROBIN_TICKS 0
-//
-//#define ROUND_ROBIN_MODE_ENABLED (MAX_ROUND_ROBIN_TICKS > 1)
+uint64_t context_switch_time;
+uint64_t total_context_switch_time;
 /***********************************************************
  * Kernel low level context switch functions
  ***********************************************************/

@@ -48,7 +48,7 @@ tcb * TCBLIST;
 
 tcb * SUSPENDEDLIST;
 
-tcb * ROUNDROBIN_end;
+//tcb * ROUNDROBIN_end;
 
 #if IDLE_TASK_ENABLED
 ROSA_taskHandle_t IDLETASK;
@@ -88,13 +88,13 @@ void ROSA_init(void)
 	TCBLIST				= NULL;
 	SUSPENDEDLIST		= NULL;
 	EXECTASK			= NULL;
-	ROUNDROBIN_end		= NULL;
+	//ROUNDROBIN_end		= NULL;
 	SEMAPHORES			= NULL;
 	
 #if IDLE_TASK_ENABLED
 	IDLETASK = NULL;
 	ROSA_taskCreate(&IDLETASK, "idle", idle, 0x40, 255);
-	taskUninstall(IDLETASK);
+	//taskUninstall(IDLETASK);
 #endif
 	
 	//initialize system time
@@ -223,9 +223,9 @@ uint16_t taskInstall(tcb * task)
 		task->nexttcb = task;
 		task->prevtcb = task;
 
-#if ROUND_ROBIN_MODE_ENABLED
-		ROUNDROBIN_end = NULL; // shouldn't be necessary, but is safer
-#endif
+//#if ROUND_ROBIN_MODE_ENABLED
+		//ROUNDROBIN_end = NULL; // shouldn't be necessary, but is safer
+//#endif
 
 		result = 1;
 	}
@@ -253,12 +253,12 @@ uint16_t taskInstall(tcb * task)
 		result = 1;
 	}
 
-#if ROUND_ROBIN_MODE_ENABLED
-	if( TCBLIST->effective_priority == task->effective_priority )
-	{
-		ROUNDROBIN_end = task;
-	}
-#endif
+//#if ROUND_ROBIN_MODE_ENABLED
+	//if( TCBLIST->effective_priority == task->effective_priority )
+	//{
+		//ROUNDROBIN_end = task;
+	//}
+//#endif
 
 	return result;
 }
@@ -356,21 +356,21 @@ uint16_t taskUninstall( tcb * task )
 {
 	uint16_t result = -1;
 
-#if ROUND_ROBIN_MODE_ENABLED
-	// if the uninstalled task has the same priority as the first task and we are in round robin mode
-	if( task->effective_priority == TCBLIST->effective_priority && ROUNDROBIN_end != NULL ) // ROUNDROBIN_end is potentially affected
-	{
-		// if there are only two tasks in the round robin
-		if( TCBLIST->nexttcb == ROUNDROBIN_end )
-		{
-			ROUNDROBIN_end = NULL;
-		}
-		else if( task == ROUNDROBIN_end )
-		{
-			ROUNDROBIN_end = ROUNDROBIN_end->prevtcb;
-		}
-	}
-#endif
+//#if ROUND_ROBIN_MODE_ENABLED
+	//// if the uninstalled task has the same priority as the first task and we are in round robin mode
+	//if( task->effective_priority == TCBLIST->effective_priority && ROUNDROBIN_end != NULL ) // ROUNDROBIN_end is potentially affected
+	//{
+		//// if there are only two tasks in the round robin
+		//if( TCBLIST->nexttcb == ROUNDROBIN_end )
+		//{
+			//ROUNDROBIN_end = NULL;
+		//}
+		//else if( task == ROUNDROBIN_end )
+		//{
+			//ROUNDROBIN_end = ROUNDROBIN_end->prevtcb;
+		//}
+	//}
+//#endif
 	
 	// change head and tail of TCBLIST if necessary
 	if( TCBLIST == task && (TCBLIST->prevtcb) == task )
@@ -437,7 +437,7 @@ uint16_t remove(tcb * removed_task)
 
 uint16_t ROSA_delay( uint64_t ticks )
 {
-	interruptDisable;
+	interruptDisable();
 	uint16_t result = -1;
 	
 	taskUninstall(EXECTASK);
@@ -446,14 +446,14 @@ uint16_t ROSA_delay( uint64_t ticks )
 	
 	result = ticks;
 	
-	interruptEnable();
+	//interruptEnable();
 	ROSA_yield();
 	return result;
 }
 
 uint16_t ROSA_delayUntil( uint64_t* lastWakeTime, uint64_t ticks )
 {
-	interruptDisable;
+	interruptDisable();
 	uint16_t result = -1;
 	
 	taskUninstall(EXECTASK);
@@ -463,19 +463,19 @@ uint16_t ROSA_delayUntil( uint64_t* lastWakeTime, uint64_t ticks )
 	
 	result = ticks - (* lastWakeTime);
 	
-	interruptEnable();
+	//interruptEnable();
 	ROSA_yield();
 	return result;
 }
 
 uint16_t ROSA_delayAbsolute( uint64_t ticks )
 {
-	interruptDisable;
+	interruptDisable();
 	uint16_t result = -1;
 	taskUninstall(EXECTASK);
 	EXECTASK->back_online_time = ticks;
 	taskSuspend(EXECTASK);
-	interruptEnable();
+	//interruptEnable();
 	ROSA_yield();
 	return result;
 }
