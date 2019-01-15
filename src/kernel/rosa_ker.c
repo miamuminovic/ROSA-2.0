@@ -415,6 +415,8 @@ uint16_t ROSA_delay( uint64_t ticks )
 
 uint16_t ROSA_delayUntil( uint64_t* lastWakeTime, uint64_t ticks )
 {
+	if( lastWakeTime == NULL ){ return -1; }
+	
 	interruptDisable();
 	uint16_t result = -1;
 	
