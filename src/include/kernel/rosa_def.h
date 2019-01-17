@@ -43,7 +43,7 @@
 #define ROUND_ROBIN_MODE_ENABLED 1
 
 // MAX_ROUND_ROBIN_TICKS is the number of system ticks that each task in the round robin execution is granted.
-#define MAX_ROUND_ROBIN_TICKS 10
+#define MAX_ROUND_ROBIN_TICKS 30
 
 // If IDLE_TASK_ENABLED is non-zero, an idle task will be created and executed when no other tasks are ready for execution.
 #define IDLE_TASK_ENABLED 1

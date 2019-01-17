@@ -48,8 +48,6 @@ tcb * TCBLIST;
 
 tcb * SUSPENDEDLIST;
 
-//tcb * ROUNDROBIN_end;
-
 #if IDLE_TASK_ENABLED
 ROSA_taskHandle_t IDLETASK;
 #endif
@@ -105,6 +103,8 @@ void ROSA_init(void)
 	interruptInit();
 	timerInit(1);
 	//...
+	
+	timerStart();
 }
 
 uint64_t ROSA_getTickCount(void)
@@ -224,7 +224,7 @@ uint16_t taskInstall(tcb * task)
 	else
 	{
 		iterator = TCBLIST;
-		while( iterator && task->effective_priority >= iterator->effective_priority )
+		while( iterator && task->effective_priority >= iterator->effective_priority && iterator->nexttcb != TCBLIST)
 		{
 			iterator = iterator->nexttcb;
 		}

@@ -69,5 +69,4 @@ void scheduler(void)
 	}
 	
 	EXECTASK = TCBLIST;
-
 }
